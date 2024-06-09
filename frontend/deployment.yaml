@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontdbapp-deployment
+  namespace: dbfrontapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontapp
+  template:
+    metadata:
+      labels:
+        app: frontapp
+    spec:
+      containers:
+      - name: dbfront-container
+        image: gcr.io/in-class-activity-424123/frontapp:latest
+      imagePullSecrets:
+      - name: db-credentials  # Check if this secret exists in the namespace

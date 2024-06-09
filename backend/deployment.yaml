@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backappdb-deployment
+  namespace: backdbapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backappdb
+  template:
+    metadata:
+      labels:
+        app: backappdb
+    spec:
+      containers:
+      - name: mybackappdb-container
+        image: gcr.io/in-class-activity-424123/backappdb:latest
+        env:
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: mydb-credentials
+              key: DB_HOST
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: mydb-credentials
+              key: DB_NAME
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: mydb-credentials
+              key: DB_USER
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mydb-credentials
+              key: DB_PASSWORD
+        - name: DB_PORT
+          value: "5432"  # Modify the port as per your database configuration
+      imagePullSecrets:
+      - name: mydb-credentials
