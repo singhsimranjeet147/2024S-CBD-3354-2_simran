@@ -1,1 +1,1 @@
-# 2024S-CBD-3354-2_simran
+This project involves setting up a Cloud SQL PostgreSQL instance in GCP and connecting it to a Python application deployed on Google Kubernetes Engine (GKE). The application uses environment variables for database credentials, stored securely as Kubernetes secrets. The deployment configuration is updated to use these secrets, and the application is tested for successful database connectivity.
