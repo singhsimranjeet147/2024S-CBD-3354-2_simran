@@ -1,1 +1,2 @@
-# 2024S-CBD-3354-2_simran
+
+To connect a managed PostgreSQL database on GCP to a Python application deployed on GKE, start by setting up a Cloud SQL instance, configuring network settings, and creating the necessary database and user. Update your Python application to use environment variables for database credentials, and connect to the database using the psycopg2 library. Securely store these credentials in a Kubernetes secret with kubectl, and modify your Kubernetes deployment YAML to pass the secret values as environment variables. Apply the deployment updates and expose your application. This approach ensures a secure and seamless integration between your GCP-managed database and your application on GKE, enabling efficient database access and interaction.
