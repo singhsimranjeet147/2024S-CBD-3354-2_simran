@@ -20,29 +20,29 @@
 - name: 'gcr.io/cloud-builders/kubectl'
   args: ['apply', '-f', './backend/deployment.yaml']
   env:
-    - 'CLOUDSDK_COMPUTE_ZONE=$_COMPUTE_ZONE'
-    - 'CLOUDSDK_CONTAINER_CLUSTER=$_CLUSTER_NAME'
+      - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'
+    - 'CLOUDSDK_CONTAINER_CLUSTER=my-cluster2'
 
 # Step 6: Deploy frontend to Kubernetes
 - name: 'gcr.io/cloud-builders/kubectl'
   args: ['apply', '-f', './frontend/deployment.yaml']
   env:
-    - 'CLOUDSDK_COMPUTE_ZONE=$_COMPUTE_ZONE'
-    - 'CLOUDSDK_CONTAINER_CLUSTER=$_CLUSTER_NAME'
+       - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'
+    - 'CLOUDSDK_CONTAINER_CLUSTER=my-cluster2'
 
 # Step 7: Expose the backend service
 - name: 'gcr.io/cloud-builders/kubectl'
   args: ['expose', 'deployment', 'backappdb-deployment', '--type=LoadBalancer', '--name=backdbapp-service ', '--port=5000', '--target-port=5000']
   env:
-    - 'CLOUDSDK_COMPUTE_ZONE=$_COMPUTE_ZONE'
-    - 'CLOUDSDK_CONTAINER_CLUSTER=$_CLUSTER_NAME'
+      - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'
+    - 'CLOUDSDK_CONTAINER_CLUSTER=my-cluster2'
 
 # Step 8: Expose the frontend service
 - name: 'gcr.io/cloud-builders/kubectl'
   args: ['expose', 'deployment', 'frontdbapp-deployment', '--type=LoadBalancer', '--name=frontdbapp-service ', '--port=80', '--target-port=80']
   env:
-    - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a
-    - 'CLOUDSDK_CONTAINER_CLUSTER=my-cluster2
+    - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'
+    - 'CLOUDSDK_CONTAINER_CLUSTER=my-cluster2'
 timeout: '1200s'
 
 
