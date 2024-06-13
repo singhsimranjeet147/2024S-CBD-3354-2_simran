@@ -41,8 +41,8 @@
 - name: 'gcr.io/cloud-builders/kubectl'
   args: ['expose', 'deployment', 'frontdbapp-deployment', '--type=LoadBalancer', '--name=frontdbapp-service ', '--port=80', '--target-port=80']
   env:
-    - 'CLOUDSDK_COMPUTE_ZONE=$_COMPUTE_ZONE'
-    - 'CLOUDSDK_CONTAINER_CLUSTER=$_CLUSTER_NAME'
+    - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'
+    - 'CLOUDSDK_CONTAINER_CLUSTER=my-cluster2
 timeout: '1200s'
 
 # Substitutions for dynamic values
