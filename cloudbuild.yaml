@@ -63,7 +63,6 @@
   env:
     - 'CLOUDSDK_COMPUTE_ZONE=$_COMPUTE_ZONE'
     - 'CLOUDSDK_CONTAINER_CLUSTER=$_CLUSTER_NAME'
-
 timeout: '1200s'
 
 # Substitutions for dynamic values
