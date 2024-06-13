@@ -18,28 +18,48 @@
 
 # Step 5: Deploy backend to Kubernetes
 - name: 'gcr.io/cloud-builders/kubectl'
-  args: ['apply', '-f', './backend/deployment.yaml']
+  args:
+    - 'apply'
+    - '-f'
+    - './backend/deployment.yaml'
   env:
     - 'CLOUDSDK_COMPUTE_ZONE=$_COMPUTE_ZONE'
     - 'CLOUDSDK_CONTAINER_CLUSTER=$_CLUSTER_NAME'
 
 # Step 6: Deploy frontend to Kubernetes
 - name: 'gcr.io/cloud-builders/kubectl'
-  args: ['apply', '-f', './frontend/deployment.yaml']
+  args:
+    - 'apply'
+    - '-f'
+    - './frontend/deployment.yaml'
   env:
     - 'CLOUDSDK_COMPUTE_ZONE=$_COMPUTE_ZONE'
     - 'CLOUDSDK_CONTAINER_CLUSTER=$_CLUSTER_NAME'
 
 # Step 7: Expose the backend service
 - name: 'gcr.io/cloud-builders/kubectl'
-  args: ['expose', 'deployment', 'backappdb-deployment', '--type=LoadBalancer', '--name=backdbapp-service ', '--port=5000', '--target-port=5000']
+  args:
+    - 'expose'
+    - 'deployment'
+    - 'backappdb-deployment'
+    - '--type=LoadBalancer'
+    - '--name=backdbapp-service'
+    - '--port=5000'
+    - '--target-port=5000'
   env:
     - 'CLOUDSDK_COMPUTE_ZONE=$_COMPUTE_ZONE'
     - 'CLOUDSDK_CONTAINER_CLUSTER=$_CLUSTER_NAME'
 
 # Step 8: Expose the frontend service
 - name: 'gcr.io/cloud-builders/kubectl'
-  args: ['expose', 'deployment', 'frontdbapp-deployment', '--type=LoadBalancer', '--name=frontdbapp-service ', '--port=80', '--target-port=80']
+  args:
+    - 'expose'
+    - 'deployment'
+    - 'frontdbapp-deployment'
+    - '--type=LoadBalancer'
+    - '--name=frontdbapp-service'
+    - '--port=80'
+    - '--target-port=80'
   env:
     - 'CLOUDSDK_COMPUTE_ZONE=$_COMPUTE_ZONE'
     - 'CLOUDSDK_CONTAINER_CLUSTER=$_CLUSTER_NAME'
@@ -51,6 +71,7 @@ substitutions:
   _COMPUTE_ZONE: 'us-central1-a'
   _CLUSTER_NAME: 'my-cluster2'
 
+# Images to be pushed (optional)
 images:
   - 'gcr.io/in-class-activity-424123/backappdb:latest'
   - 'gcr.io/in-class-activity-424123/frontapp:latest'
