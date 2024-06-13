@@ -1,23 +1,18 @@
 steps:
-  # Step 1: Build the backend image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/in-class-activity-424123/backappdb:latest', './backend']
     dir: 'backend'
 
-  # Step 2: Push the backend image to Google Container Registry
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/in-class-activity-424123/backappdb:latest']
 
-  # Step 3: Build the frontend image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/in-class-activity-424123/frontapp:latest', './frontend']
     dir: 'frontend'
 
-  # Step 4: Push the frontend image to Google Container Registry
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/in-class-activity-424123/frontapp:latest']
 
-  # Step 5: Deploy backend to Kubernetes
   - name: 'gcr.io/cloud-builders/kubectl'
     args:
       - 'apply'
@@ -27,7 +22,6 @@ steps:
       - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'
       - 'CLOUDSDK_CONTAINER_CLUSTER=my-cluster2'
 
-  # Step 6: Deploy frontend to Kubernetes
   - name: 'gcr.io/cloud-builders/kubectl'
     args:
       - 'apply'
@@ -37,33 +31,9 @@ steps:
       - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'
       - 'CLOUDSDK_CONTAINER_CLUSTER=my-cluster2'
 
-  # Step 7: Expose the backend service
-  - name: 'gcr.io/cloud-builders/kubectl'
-    args:
-      - 'expose'
-      - 'deployment'
-      - 'backappdb-deployment'
-      - '--type=LoadBalancer'
-      - '--name=backdbapp-service'
-      - '--port=5000'
-      - '--target-port=5000'
-    env:
-      - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'
-      - 'CLOUDSDK_CONTAINER_CLUSTER=my-cluster2'
+options:
+  logging:
+    - CLOUD_LOGGING_ONLY  # Use only Cloud Logging for logging
 
-  # Step 8: Expose the frontend service
-  - name: 'gcr.io/cloud-builders/kubectl'
-    args:
-      - 'expose'
-      - 'deployment'
-      - 'frontdbapp-deployment'
-      - '--type=LoadBalancer'
-      - '--name=frontdbapp-service'
-      - '--port=80'
-      - '--target-port=80'
-    env:
-      - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'
-      - 'CLOUDSDK_CONTAINER_CLUSTER=my-cluster2'
-
-timeout: '1200s'
-
+build:
+  service_account: singhsimranjeet147@gmail.com  # Replace with your service account email
