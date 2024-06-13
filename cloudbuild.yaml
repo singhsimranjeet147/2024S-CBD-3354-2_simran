@@ -66,9 +66,4 @@ steps:
       - 'CLOUDSDK_CONTAINER_CLUSTER=my-cluster2'
 
 timeout: '1200s'
-options:
-  logging:
-    - CLOUD_LOGGING_ONLY
 
-build:
-  service_account: singhsimranjeet147@gmail.com
