@@ -33,7 +33,4 @@ steps:
 
 options:
   logging:
-    - CLOUD_LOGGING_ONLY  # Use only Cloud Logging for logging
-
-build:
-  service_account: singhsimranjeet147@gmail.com  # Replace with your service account email
+    - default_logs_bucket_behavior: REGIONAL_USER_OWNED_BUCKET
