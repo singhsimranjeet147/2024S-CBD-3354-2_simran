@@ -25,7 +25,7 @@ steps:
     args:
       - 'delete'
       - '-f'
-      - 'backend/deployment.yaml'  # Replace with your backend deployment file path
+      - 'backdbapp/deployment.yaml'  # Replace with your backend deployment file path
       - '--ignore-not-found=true'
     env:
       - 'CLOUDSDK_COMPUTE_ZONE=us-central1'  # Replace with your actual compute zone
@@ -47,7 +47,7 @@ steps:
     args:
       - 'apply'
       - '-f'
-      - 'backend/deployment.yaml'  # Replace with your backend deployment file path
+      - 'backdbapp/deployment.yaml'  # Replace with your backend deployment file path
     env:
       - 'CLOUDSDK_COMPUTE_ZONE=us-central1'  # Replace with your actual compute zone
       - 'CLOUDSDK_CONTAINER_CLUSTER=simran'      # Replace with your actual cluster name
