@@ -22,11 +22,11 @@ steps:
 
   # Step 5: Delete existing backend deployment and then apply new configuration
   - name: 'gcr.io/cloud-builders/kubectl'
+    - name: 'gcr.io/cloud-builders/kubectl'
     args:
-      - 'delete'
+      - 'apply'
       - '-f'
-      - 'backdbapp/deployment.yaml'  # Replace with your backend deployment file path
-      - '--ignore-not-found=true'
+      - 'backappdb-deployment.yaml'
     env:
       - 'CLOUDSDK_COMPUTE_ZONE=us-central1'  # Replace with your actual compute zone
       - 'CLOUDSDK_CONTAINER_CLUSTER=simran'      # Replace with your actual cluster name
@@ -44,10 +44,11 @@ steps:
 
   # Step 7: Deploy backend to Kubernetes
   - name: 'gcr.io/cloud-builders/kubectl'
+    - name: 'gcr.io/cloud-builders/kubectl'
     args:
       - 'apply'
       - '-f'
-      - 'backdbapp/deployment.yaml'  # Replace with your backend deployment file path
+      - 'backappdb-deployment.yaml'th
     env:
       - 'CLOUDSDK_COMPUTE_ZONE=us-central1'  # Replace with your actual compute zone
       - 'CLOUDSDK_CONTAINER_CLUSTER=simran'      # Replace with your actual cluster name
