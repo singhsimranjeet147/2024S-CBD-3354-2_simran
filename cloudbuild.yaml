@@ -29,7 +29,7 @@ steps:
       - '--ignore-not-found=true'
     env:
       - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'  # Replace with your actual compute zone
-      - 'CLOUDSDK_CONTAINER_CLUSTER=aman'      # Replace with your actual cluster name
+      - 'CLOUDSDK_CONTAINER_CLUSTER=simran'      # Replace with your actual cluster name
 
   # Step 6: Delete existing frontend deployment and then apply new configuration
   - name: 'gcr.io/cloud-builders/kubectl'
@@ -40,7 +40,7 @@ steps:
       - '--ignore-not-found=true'
     env:
       - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'  # Replace with your actual compute zone
-      - 'CLOUDSDK_CONTAINER_CLUSTER=aman'      # Replace with your actual cluster name
+      - 'CLOUDSDK_CONTAINER_CLUSTER=simran'      # Replace with your actual cluster name
 
   # Step 7: Deploy backend to Kubernetes
   - name: 'gcr.io/cloud-builders/kubectl'
@@ -50,7 +50,7 @@ steps:
       - 'backend/deployment.yaml'  # Replace with your backend deployment file path
     env:
       - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'  # Replace with your actual compute zone
-      - 'CLOUDSDK_CONTAINER_CLUSTER=aman'      # Replace with your actual cluster name
+      - 'CLOUDSDK_CONTAINER_CLUSTER=simran'      # Replace with your actual cluster name
 
   # Step 8: Deploy frontend to Kubernetes
   - name: 'gcr.io/cloud-builders/kubectl'
@@ -60,7 +60,7 @@ steps:
       - 'frontend/deployment.yaml'  # Replace with your frontend deployment file path
     env:
       - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'  # Replace with your actual compute zone
-      - 'CLOUDSDK_CONTAINER_CLUSTER=aman'      # Replace with your actual cluster name
+      - 'CLOUDSDK_CONTAINER_CLUSTER=simran'      # Replace with your actual cluster name
 
   # Step 9: Expose the backend service (if not exists)
   - name: 'gcr.io/cloud-builders/kubectl'
@@ -85,7 +85,7 @@ steps:
         ' | kubectl apply -f -
     env:
       - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'  # Replace with your actual compute zone
-      - 'CLOUDSDK_CONTAINER_CLUSTER=aman'      # Replace with your actual cluster name
+      - 'CLOUDSDK_CONTAINER_CLUSTER=simran'      # Replace with your actual cluster name
 
   # Step 10: Expose the frontend service (if not exists)
   - name: 'gcr.io/cloud-builders/kubectl'
