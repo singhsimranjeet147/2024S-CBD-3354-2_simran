@@ -1,78 +1,124 @@
-steps:
-  # Step 1: Build the backend image
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/in-class-activity-424123/backappdb:latest', './backend']
-    dir: 'backend'
+# cloudbuild.yaml
 
-  # Step 2: Push the backend image to Google Container Registry
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/in-class-activity-424123/backappdb:latest']
+logsBucket: gs://inclass_bucket1  # The Cloud Storage bucket for build logs
 
-  # Step 3: Build the frontend image
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/in-class-activity-424123/frontapp:latest', './frontend']
-    dir: 'frontend'
-
-  # Step 4: Push the frontend image to Google Container Registry
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/in-class-activity-424123/frontapp:latest']
-
-  # Step 5: Deploy backend to Kubernetes
-  - name: 'gcr.io/cloud-builders/kubectl'
-    args:
-      - 'apply'
-      - '-f'
-      - './backend/deployment.yaml'
-    env:
-      - 'CLOUDSDK_COMPUTE_ZONE=$_COMPUTE_ZONE'
-      - 'CLOUDSDK_CONTAINER_CLUSTER=$_CLUSTER_NAME'
-
-  # Step 6: Deploy frontend to Kubernetes
-  - name: 'gcr.io/cloud-builders/kubectl'
-    args:
-      - 'apply'
-      - '-f'
-      - './frontend/deployment.yaml'
-    env:
-      - 'CLOUDSDK_COMPUTE_ZONE=$_COMPUTE_ZONE'
-      - 'CLOUDSDK_CONTAINER_CLUSTER=$_CLUSTER_NAME'
-
-  # Step 7: Expose the backend service
-  - name: 'gcr.io/cloud-builders/kubectl'
-    args:
-      - 'expose'
-      - 'deployment'
-      - 'backappdb-deployment'
-      - '--type=LoadBalancer'
-      - '--name=backdbapp-service'
-      - '--port=5000'
-      - '--target-port=5000'
-    env:
-      - 'CLOUDSDK_COMPUTE_ZONE=$_COMPUTE_ZONE'
-      - 'CLOUDSDK_CONTAINER_CLUSTER=$_CLUSTER_NAME'
-
-  # Step 8: Expose the frontend service
-  - name: 'gcr.io/cloud-builders/kubectl'
-    args:
-      - 'expose'
-      - 'deployment'
-      - 'frontdbapp-deployment'
-      - '--type=LoadBalancer'
-      - '--name=frontdbapp-service'
-      - '--port=80'
-      - '--target-port=80'
-    env:
-      - 'CLOUDSDK_COMPUTE_ZONE=$_COMPUTE_ZONE'
-      - 'CLOUDSDK_CONTAINER_CLUSTER=$_CLUSTER_NAME'
-
-timeout: '1200s'
-
-# Substitutions for dynamic values
 substitutions:
-  _COMPUTE_ZONE: 'us-central1-a'
-  _CLUSTER_NAME: 'my-cluster2'
+  _REGION: 'us-central1'  # Default region, can be overridden in the trigger
+  _CLUSTER_NAME: 'navi'  # Default cluster name, can be overridden in the trigger
 
-# Images to be pushed (optional)
+steps:
+  # Step 1: Build Docker image for the frontend
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/in-class-activity-424123/frontend:latest', './frontend']
+    id: 'build-frontend'
+
+  # Step 2: Build Docker image for the backend
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/in-class-activity-424123/backend:latest', './backend']
+    id: 'build-backend'
+    waitFor:
+      - 'build-frontend'
+
+  # Step 3: Push the frontend image to GCR
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/in-class-activity-424123/frontend:latest']
+    id: 'push-frontend'
+    waitFor:
+      - 'build-backend'
+
+  # Step 4: Push the backend image to GCR
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/in-class-activity-424123/backend:latest']
+    id: 'push-backend'
+    waitFor:
+      - 'push-frontend'
+
+  # Step 5: Check if the GKE cluster exists
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        if gcloud container clusters describe "${_CLUSTER_NAME}" --region "${_REGION}" > /dev/null 2>&1; then
+          echo "Cluster already exists."
+          echo "CLUSTER_EXISTS=true" > /workspace/cluster_exists.txt
+        else
+          echo "Cluster does not exist."
+          echo "CLUSTER_EXISTS=false" > /workspace/cluster_exists.txt
+        fi
+    id: 'check-cluster'
+    waitFor:
+      - 'push-backend'
+
+  # Step 6: Apply Terraform configuration if the cluster does not exist
+  - name: 'hashicorp/terraform:latest'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        if grep -q CLUSTER_EXISTS=true /workspace/cluster_exists.txt; then
+          echo "Skipping Terraform apply as cluster exists."
+        else
+          echo "Cluster does not exist. Running Terraform apply."
+          cd terraform
+          terraform init
+          terraform apply -auto-approve
+        fi
+    id: 'terraform-apply'
+    waitFor:
+      - 'check-cluster'
+
+  # Step 7: Extract cluster credentials
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud container clusters get-credentials "${_CLUSTER_NAME}" --region "${_REGION}"
+    id: 'get-credentials'
+    waitFor:
+      - 'terraform-apply'
+
+  # Step 8: Deploy the frontend application to GKE
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args: ['apply', '-f', 'frontend/deployment.yaml']
+    id: 'deploy-frontend'
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=${_REGION}'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME}'
+    waitFor:
+      - 'get-credentials'
+
+  # Step 9: Deploy the backend application to GKE
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args: ['apply', '-f', 'backend/deployment.yaml']
+    id: 'deploy-backend'
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=${_REGION}'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME}'
+    waitFor:
+      - 'deploy-frontend'
+
+  # Step 10: Expose the frontend deployment with a service
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args: ['apply', '-f', 'frontend/service.yaml']
+    id: 'expose-frontend-service'
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=${_REGION}'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME}'
+    waitFor:
+      - 'deploy-backend'
+
+  # Step 11: Expose the backend deployment with a service
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args: ['apply', '-f', 'backend/service.yaml']
+    id: 'expose-backend-service'
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=${_REGION}'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME}'
+    waitFor:
+      - 'expose-frontend-service'
+
 images:
-  - 'gcr.io/in-class-activity-424123/backappdb:latest'
-  - 'gcr.io/in-class-activity-424123/frontapp:latest'
+  - 'gcr.io/in-class-activity-424123/frontend:latest'
+  - 'gcr.io/in-class-activity-424123/backend:latest'
