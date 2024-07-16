@@ -4,7 +4,7 @@ logsBucket: gs://inclass_bucket1  # The Cloud Storage bucket for build logs
 
 substitutions:
   _REGION: 'us-central1'  # Default region, can be overridden in the trigger
-  _CLUSTER_NAME: 'navi'  # Default cluster name, can be overridden in the trigger
+  _CLUSTER_NAME: 'simran'  # Default cluster name, can be overridden in the trigger
 
 steps:
   # Step 1: Build Docker image for the frontend
@@ -50,9 +50,7 @@ steps:
     waitFor:
       - 'push-backend'
 
-
-
-  # Step 7: Extract cluster credentials
+  # Step 6: Extract cluster credentials
   - name: 'gcr.io/cloud-builders/gcloud'
     entrypoint: 'bash'
     args:
@@ -61,9 +59,9 @@ steps:
         gcloud container clusters get-credentials "${_CLUSTER_NAME}" --region "${_REGION}"
     id: 'get-credentials'
     waitFor:
-      - 'terraform-apply'
+      - 'check-cluster'
 
-  # Step 8: Deploy the frontend application to GKE
+  # Step 7: Deploy the frontend application to GKE
   - name: 'gcr.io/cloud-builders/kubectl'
     args: ['apply', '-f', 'frontend/deployment.yaml']
     id: 'deploy-frontend'
@@ -73,7 +71,7 @@ steps:
     waitFor:
       - 'get-credentials'
 
-  # Step 9: Deploy the backend application to GKE
+  # Step 8: Deploy the backend application to GKE
   - name: 'gcr.io/cloud-builders/kubectl'
     args: ['apply', '-f', 'backend/deployment.yaml']
     id: 'deploy-backend'
@@ -83,7 +81,7 @@ steps:
     waitFor:
       - 'deploy-frontend'
 
-  # Step 10: Expose the frontend deployment with a service
+  # Step 9: Expose the frontend deployment with a service
   - name: 'gcr.io/cloud-builders/kubectl'
     args: ['apply', '-f', 'frontend/service.yaml']
     id: 'expose-frontend-service'
@@ -93,7 +91,7 @@ steps:
     waitFor:
       - 'deploy-backend'
 
-  # Step 11: Expose the backend deployment with a service
+  # Step 10: Expose the backend deployment with a service
   - name: 'gcr.io/cloud-builders/kubectl'
     args: ['apply', '-f', 'backend/service.yaml']
     id: 'expose-backend-service'
