@@ -50,23 +50,7 @@ steps:
     waitFor:
       - 'push-backend'
 
-  # Step 6: Apply Terraform configuration if the cluster does not exist
-  - name: 'hashicorp/terraform:latest'
-    entrypoint: 'sh'
-    args:
-      - '-c'
-      - |
-        if grep -q CLUSTER_EXISTS=true /workspace/cluster_exists.txt; then
-          echo "Skipping Terraform apply as cluster exists."
-        else
-          echo "Cluster does not exist. Running Terraform apply."
-          cd terraform
-          terraform init
-          terraform apply -auto-approve
-        fi
-    id: 'terraform-apply'
-    waitFor:
-      - 'check-cluster'
+
 
   # Step 7: Extract cluster credentials
   - name: 'gcr.io/cloud-builders/gcloud'
