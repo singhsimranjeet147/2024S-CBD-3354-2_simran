@@ -1,106 +1,113 @@
-# cloudbuild.yaml
-
-logsBucket: gs://inclass_bucket1  # The Cloud Storage bucket for build logs
-
-substitutions:
-  _REGION: 'us-central1'  # Default region, can be overridden in the trigger
-  _CLUSTER_NAME: 'simran'  # Default cluster name, can be overridden in the trigger
+# Replace '<your-bucket-name>' with your actual bucket name
+logsBucket: gs://inclass_bucket1
 
 steps:
-  # Step 1: Build Docker image for the frontend
+  # Step 1: Build the frontend image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/in-class-activity-424123/frontend:latest', './frontend']
-    id: 'build-frontend'
+    args: ['build', '-t', 'gcr.io/in-class-activity-424123/frontend-image:latest', '.']
+    dir: 'frontend'  # Ensure this points to the correct directory
 
-  # Step 2: Build Docker image for the backend
+  # Step 2: Push the frontend image to Google Container Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/in-class-activity-424123/backend:latest', './backend']
-    id: 'build-backend'
-    waitFor:
-      - 'build-frontend'
+    args: ['push', 'gcr.io/in-class-activity-424123/frontend-image:latest']
 
-  # Step 3: Push the frontend image to GCR
+  # Step 3: Build the backend image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/in-class-activity-424123/frontend:latest']
-    id: 'push-frontend'
-    waitFor:
-      - 'build-backend'
+    args: ['build', '-t', 'gcr.io/in-class-activity-424123/backend-image:latest', '.']
+    dir: 'backend'  # Ensure this points to the correct directory
 
-  # Step 4: Push the backend image to GCR
+  # Step 4: Push the backend image to Google Container Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/in-class-activity-424123/backend:latest']
-    id: 'push-backend'
-    waitFor:
-      - 'push-frontend'
+    args: ['push', 'gcr.io/in-class-activity-424123/backend-image:latest']
 
-  # Step 5: Check if the GKE cluster exists
-  - name: 'gcr.io/cloud-builders/gcloud'
+  # Step 5: Delete existing backend deployment and then apply new configuration
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args:
+      - 'delete'
+      - '-f'
+      - 'backend/deployment.yaml'  # Replace with your backend deployment file path
+      - '--ignore-not-found=true'
+    env:
+      - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'  # Replace with your actual compute zone
+      - 'CLOUDSDK_CONTAINER_CLUSTER=aman'      # Replace with your actual cluster name
+
+  # Step 6: Delete existing frontend deployment and then apply new configuration
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args:
+      - 'delete'
+      - '-f'
+      - 'frontend/deployment.yaml'  # Replace with your frontend deployment file path
+      - '--ignore-not-found=true'
+    env:
+      - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'  # Replace with your actual compute zone
+      - 'CLOUDSDK_CONTAINER_CLUSTER=aman'      # Replace with your actual cluster name
+
+  # Step 7: Deploy backend to Kubernetes
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args:
+      - 'apply'
+      - '-f'
+      - 'backend/deployment.yaml'  # Replace with your backend deployment file path
+    env:
+      - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'  # Replace with your actual compute zone
+      - 'CLOUDSDK_CONTAINER_CLUSTER=aman'      # Replace with your actual cluster name
+
+  # Step 8: Deploy frontend to Kubernetes
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args:
+      - 'apply'
+      - '-f'
+      - 'frontend/deployment.yaml'  # Replace with your frontend deployment file path
+    env:
+      - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'  # Replace with your actual compute zone
+      - 'CLOUDSDK_CONTAINER_CLUSTER=aman'      # Replace with your actual cluster name
+
+  # Step 9: Expose the backend service (if not exists)
+  - name: 'gcr.io/cloud-builders/kubectl'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
-        if gcloud container clusters describe "${_CLUSTER_NAME}" --region "${_REGION}" > /dev/null 2>&1; then
-          echo "Cluster already exists."
-          echo "CLUSTER_EXISTS=true" > /workspace/cluster_exists.txt
-        else
-          echo "Cluster does not exist."
-          echo "CLUSTER_EXISTS=false" > /workspace/cluster_exists.txt
-        fi
-    id: 'check-cluster'
-    waitFor:
-      - 'push-backend'
+        echo '
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: backend-service
+          labels:
+            app: backend-image
+        spec:
+          type: LoadBalancer
+          selector:
+            app: backend-image
+          ports:
+          - port: 5000
+            targetPort: 5000
+        ' | kubectl apply -f -
+    env:
+      - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'  # Replace with your actual compute zone
+      - 'CLOUDSDK_CONTAINER_CLUSTER=aman'      # Replace with your actual cluster name
 
-  # Step 6: Extract cluster credentials
-  - name: 'gcr.io/cloud-builders/gcloud'
+  # Step 10: Expose the frontend service (if not exists)
+  - name: 'gcr.io/cloud-builders/kubectl'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
-        gcloud container clusters get-credentials "${_CLUSTER_NAME}" --region "${_REGION}"
-    id: 'get-credentials'
-    waitFor:
-      - 'check-cluster'
-
-  # Step 7: Deploy the frontend application to GKE
-  - name: 'gcr.io/cloud-builders/kubectl'
-    args: ['apply', '-f', 'frontend/deployment.yaml']
-    id: 'deploy-frontend'
+        echo '
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: frontend-service
+          labels:
+            app: frontend-image
+        spec:
+          type: LoadBalancer
+          selector:
+            app: frontend-image
+          ports:
+          - port: 80
+            targetPort: 80
+        ' | kubectl apply -f -
     env:
-      - 'CLOUDSDK_COMPUTE_REGION=${_REGION}'
-      - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME}'
-    waitFor:
-      - 'get-credentials'
-
-  # Step 8: Deploy the backend application to GKE
-  - name: 'gcr.io/cloud-builders/kubectl'
-    args: ['apply', '-f', 'backend/deployment.yaml']
-    id: 'deploy-backend'
-    env:
-      - 'CLOUDSDK_COMPUTE_REGION=${_REGION}'
-      - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME}'
-    waitFor:
-      - 'deploy-frontend'
-
-  # Step 9: Expose the frontend deployment with a service
-  - name: 'gcr.io/cloud-builders/kubectl'
-    args: ['apply', '-f', 'frontend/service.yaml']
-    id: 'expose-frontend-service'
-    env:
-      - 'CLOUDSDK_COMPUTE_REGION=${_REGION}'
-      - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME}'
-    waitFor:
-      - 'deploy-backend'
-
-  # Step 10: Expose the backend deployment with a service
-  - name: 'gcr.io/cloud-builders/kubectl'
-    args: ['apply', '-f', 'backend/service.yaml']
-    id: 'expose-backend-service'
-    env:
-      - 'CLOUDSDK_COMPUTE_REGION=${_REGION}'
-      - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME}'
-    waitFor:
-      - 'expose-frontend-service'
-
-images:
-  - 'gcr.io/in-class-activity-424123/frontend:latest'
-  - 'gcr.io/in-class-activity-424123/backend:latest'
+      - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'  # Replace with your actual compute zone
+      - 'CLOUDSDK_CONTAINER_CLUSTER=simran'      # Replace with your actual cluster name
