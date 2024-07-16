@@ -62,37 +62,37 @@ steps:
       - 'CLOUDSDK_COMPUTE_ZONE=us-central1'  # Replace with your actual compute zone
       - 'CLOUDSDK_CONTAINER_CLUSTER=simran'      # Replace with your actual cluster name
 
- # Step 7: Deploy backend to Kubernetes
-- name: 'gcr.io/cloud-builders/kubectl'
-  args:
-    - 'apply'
-    - '-f'
-    - 'backend/deployment.yaml'  # Replace with your backend deployment file path
-  env:
-    - 'CLOUDSDK_COMPUTE_ZONE=us-central1'  # Replace with your actual compute zone
-    - 'CLOUDSDK_CONTAINER_CLUSTER=simran'  # Replace with your actual cluster name
-
- # Step 10 Expose the frontend service (if not exists)
-- name: 'gcr.io/cloud-builders/kubectl'
-  entrypoint: 'bash'
-  args:
-    - '-c'
-    - |
-      echo '
-      apiVersion: v1
-      kind: Service
-      metadata:
-        name: frontdbapp-service
-        labels:
-          app: frontapp
-      spec:
-        type: LoadBalancer
-        selector:
-          app: frontapp
-        ports:
-        - port: 80
-          targetPort: 80
-      ' | kubectl apply -f -
-  env:
-    - 'CLOUDSDK_COMPUTE_ZONE=us-central1'  # Replace with your actual compute zone
-    - 'CLOUDSDK_CONTAINER_CLUSTER=simran'  # Replace with your actual cluster name
+   # Step 7: Deploy backend to Kubernetes
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args:
+      - 'apply'
+      - '-f'
+      - 'backend/deployment.yaml'  # Replace with your backend deployment file path
+    env:
+      - 'CLOUDSDK_COMPUTE_ZONE=us-central1'  # Replace with your actual compute zone
+      - 'CLOUDSDK_CONTAINER_CLUSTER=simran'  # Replace with your actual cluster name
+  
+   # Step 10 Expose the frontend service (if not exists)
+  - name: 'gcr.io/cloud-builders/kubectl'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo '
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: frontdbapp-service
+          labels:
+            app: frontapp
+        spec:
+          type: LoadBalancer
+          selector:
+            app: frontapp
+          ports:
+          - port: 80
+            targetPort: 80
+        ' | kubectl apply -f -
+    env:
+      - 'CLOUDSDK_COMPUTE_ZONE=us-central1'  # Replace with your actual compute zone
+      - 'CLOUDSDK_CONTAINER_CLUSTER=simran'  # Replace with your actual cluster name
