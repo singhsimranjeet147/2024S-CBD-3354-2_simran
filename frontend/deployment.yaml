@@ -9,7 +9,7 @@ substitutions:
 steps:
   # Step 1: Create namespace for frontend
   - name: 'gcr.io/cloud-builders/kubectl'
-    args: ['create', 'namespace', 'frontend-namespace']
+    args: ['create', 'namespace', 'frontend']
     id: 'create-frontend-namespace'
 
   # Step 2: Build Docker image for the frontend
@@ -26,7 +26,7 @@ steps:
 
   # Step 4: Create namespace for backend
   - name: 'gcr.io/cloud-builders/kubectl'
-    args: ['create', 'namespace', 'backend-namespace']
+    args: ['create', 'namespace', 'backend']
     id: 'create-backend-namespace'
     waitFor:
       - 'push-frontend'  # Wait for frontend build and push to complete
