@@ -1,6 +1,6 @@
 # cloudbuild.yaml
 
-logsBucket: gs://bucket897927  # The Cloud Storage bucket for build logs
+logsBucket: gs://inclass_bucket1  # The Cloud Storage bucket for build logs
 
 substitutions:
   _REGION: 'us-central1'  # Default region, can be overridden in the trigger
