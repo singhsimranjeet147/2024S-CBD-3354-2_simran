@@ -16,5 +16,7 @@ spec:
       containers:
       - name: dbfront-container
         image: gcr.io/in-class-activity-424123/frontapp:latest
+        ports:
+        - containerPort: 80
       imagePullSecrets:
-      - name: mydb-credentials  # Check if this secret key exists in the namespace
+      - name: mydb-credentials
