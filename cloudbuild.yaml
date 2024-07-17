@@ -53,4 +53,54 @@ steps:
   # Step 6: Extract cluster credentials
   - name: 'gcr.io/cloud-builders/gcloud'
     entrypoint: 'bash'
-   
+    args:
+      - '-c'
+      - |
+        gcloud container clusters get-credentials "${_CLUSTER_NAME}" --region "${_REGION}"
+    id: 'get-credentials'
+    waitFor:
+      - 'check-cluster'
+
+  # Step 7: Deploy the frontend application to GKE (with namespace)
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args: ['apply', '-f', 'frontend/deployment.yaml', '--namespace=frontend']
+    id: 'deploy-frontend'
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=${_REGION}'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME}'
+    waitFor:
+      - 'get-credentials'
+
+  # Step 8: Deploy the backend application to GKE (with namespace)
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args: ['apply', '-f', 'backend/deployment.yaml', '--namespace=backend']
+    id: 'deploy-backend'
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=${_REGION}'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME}'
+    waitFor:
+      - 'deploy-frontend'
+
+  # Step 9: Expose the frontend deployment with a service (with namespace)
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args: ['apply', '-f', 'frontend/service.yaml', '--namespace=frontend']
+    id: 'expose-frontend-service'
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=${_REGION}'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME}'
+    waitFor:
+      - 'deploy-backend'
+
+  # Step 10: Expose the backend deployment with a service (with namespace)
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args: ['apply', '-f', 'backend/service.yaml', '--namespace=backend']
+    id: 'expose-backend-service'
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=${_REGION}'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME}'
+    waitFor:
+      - 'expose-frontend-service'
+
+images:
+  - 'gcr.io/in-class-activity-424123/frontend:latest'
+  - 'gcr.io/in-class-activity-424123/backend:latest'
