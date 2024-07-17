@@ -61,7 +61,16 @@ steps:
     waitFor:
       - 'check-cluster'
 
-  # Step 7: Deploy the frontend application to GKE (with namespace)
+  # Step 7: Create frontend namespace (if not exists)
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args:
+      - 'create'
+      - 'namespace'
+      - 'frontend'
+    id: 'create-frontend-ns'
+    ignoreErrors: true  # Ignore errors if namespace already exists
+
+  # Step 8: Deploy the frontend application to GKE (with namespace)
   - name: 'gcr.io/cloud-builders/kubectl'
     args:
       - 'apply'
@@ -74,8 +83,18 @@ steps:
       - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME}'
     waitFor:
       - 'get-credentials'
+      - 'create-frontend-ns'  # Wait for namespace creation
 
-  # Step 8: Deploy the backend application to GKE (with namespace)
+  # Step 9: Create backend namespace (if not exists)
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args:
+      - 'create'
+      - 'namespace'
+      - 'backend'
+    id: 'create-backend-ns'
+    ignoreErrors: true  # Ignore errors if namespace already exists
+
+  # Step 10: Deploy the backend application to GKE (with namespace)
   - name: 'gcr.io/cloud-builders/kubectl'
     args:
       - 'apply'
@@ -88,8 +107,9 @@ steps:
       - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME}'
     waitFor:
       - 'deploy-frontend'
+      - 'create-backend-ns'  # Wait for namespace creation
 
-  # Step 9: Expose the frontend deployment with a service (with namespace)
+  # Step 11: Expose the frontend deployment with a service (with namespace)
   - name: 'gcr.io/cloud-builders/kubectl'
     args:
       - 'apply'
@@ -103,7 +123,7 @@ steps:
     waitFor:
       - 'deploy-backend'
 
-  # Step 10: Expose the backend deployment with a service (with namespace)
+  # Step 12: Expose the backend deployment with a service (with namespace)
   - name: 'gcr.io/cloud-builders/kubectl'
     args:
       - 'apply'
